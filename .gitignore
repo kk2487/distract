@@ -1,0 +1,4 @@
+*.npy
+*.swp
+model/
+npy_arrays
