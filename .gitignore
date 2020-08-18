@@ -1,4 +1,4 @@
 *.npy
 *.swp
-model/
+models/
 npy_arrays
