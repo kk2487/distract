@@ -4,6 +4,7 @@ import numpy as np
 import CNN as cnn
 import queue
 import time
+import utils
 from threading import Thread
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -42,11 +43,11 @@ class Camera():
         cv2.destroyAllWindows()
 
     def predict_output(self , image , model):
-        image = cv2.resize(image, (IMG_SIZE, IMG_SIZE))
+        image = cv2.resize(image, (utils.IMG_SIZE, utils.IMG_SIZE))
         image = np.array(image)
-        data = image.reshape(IMG_SIZE, IMG_SIZE, 3)
+        data = image.reshape(utils.IMG_SIZE, utils.IMG_SIZE, 3)
         model_out = model.predict([data])
-        return str(image_class[np.argmax(model_out)]),model_out
+        return str(utils.IMAGE_CLASS[np.argmax(model_out)]),model_out
 
 
 ##----------------------------------------------Video ----------------------------------------------##
@@ -72,17 +73,17 @@ class VideoInput():
             cv2.putText(src,fps,(10,50), font, 1,(0,255,0),2,cv2.LINE_AA)
             cv2.putText(src,output,(10,100), font, 1,(0,255,0),2,cv2.LINE_AA)
             cv2.imshow('Camera', src)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(60) & 0xFF == ord('q'):
                 break
         cap.release()
         cv2.destroyAllWindows()
 
     def predict_output(self , image , model):
-        image = cv2.resize(image, (IMG_SIZE, IMG_SIZE))
+        image = cv2.resize(image, (utils.IMG_SIZE, utils.IMG_SIZE))
         image = np.array(image)
-        data = image.reshape(IMG_SIZE, IMG_SIZE, 3)
+        data = image.reshape(utils.IMG_SIZE, utils.IMG_SIZE, 3)
         model_out = model.predict([data])
-        return str(image_class[np.argmax(model_out)]),model_out
+        return str(utils.IMAGE_CLASS[np.argmax(model_out)]),model_out
 
 ##----------------------------------------------  QT  ----------------------------------------------##
 
