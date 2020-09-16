@@ -7,10 +7,10 @@ TENSORBOARD_DIR = "./models/test/log"
 
 CATEGORIES = ['c0' , 'c1', 'c2', 'c3', 'c4', 'c5','c6']
 
-TRAIN_DATADIR = "/home/hongze/Desktop/0"
-TRAIN_SAVE_NPY = "/home/hongze/distract/npy_arrays/first/train.npy"
+TRAIN_DATADIR = "/home/hongze/Desktop/dataset"
+TRAIN_SAVE_NPY = "/home/hongze/Desktop/dataset/train.npy"
 
-TRAIN_DATA_PATH = "/home/hongze/distract/npy_arrays/first/train.npy"
+TRAIN_DATA_PATH = "/home/hongze/Desktop/dataset/train.npy"
 
 
 IMAGE_CLASS = ['Drinking','Talking Left ','Talking Right','Adjust Radio/Music Player','Texting Left ','Texting Right','Safe']

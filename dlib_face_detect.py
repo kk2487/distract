@@ -11,7 +11,7 @@ from PyQt5.QtGui import *
 import PyQt5.QtGui as QtGui
 from PyQt5.QtCore import *
 
-img_size = 256
+
 
 class VideoInput():
     def start_capture(self, model, fileUrl):
@@ -24,7 +24,7 @@ class VideoInput():
         detector = dlib.get_frontal_face_detector()
         n=0
         while(cap.isOpened()):
-            filename = "pic_" + str(n) + ".jpg"
+            filename = "image_" + str(n) + ".jpg"
             n=n+1
             ret, frame = cap.read()
             mark_mat = frame.copy()
@@ -43,14 +43,14 @@ class VideoInput():
                 (x1_body, y1_body, x2_body, y2_body) = (x1-int(1.2*w), y1-int(h/2), x2+int(3*w), height)
                 
                 out = frame[y1_body:y2_body,x1_body:x2_body]
-                out = cv2.resize(out, (img_size, img_size) )
+                out = cv2.resize(out, (256, 256) )
                 
                 output, model_out = self.predict_output(out , model)
                 self.predicted_class = np.argmax(model_out)
-                cv2.putText(mark_mat,output,(10,100), font, 1,(0,255,0),2,cv2.LINE_AA)
+                cv2.putText(mark_mat,output,(50,120), font, 4,(0,0,255),2,cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 4, cv2.LINE_AA)
-                #cv2.imwrite(filename, out)
+            cv2.imwrite(filename, mark_mat)
             
             cv2.imshow("Face Detection", mark_mat)
             if cv2.waitKey(1) & 0xFF == ord('q'):
