@@ -35,6 +35,7 @@ class VideoInput():
         n=0
         while(cap.isOpened()):
             filename = "image_" + str(n) + ".jpg"
+            output = ""
             n=n+1
             ret, frame = cap.read()
             mark_mat = frame.copy()

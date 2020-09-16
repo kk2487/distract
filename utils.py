@@ -5,7 +5,7 @@ MODEL_NAME = "cnn-drive"
 SAVE_PATH = "./models/test/cnn.model"
 TENSORBOARD_DIR = "./models/test/log"
 
-CATEGORIES = ['c0' , 'c1', 'c2', 'c3', 'c4', 'c5','c6']
+CATEGORIES = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6']
 
 TRAIN_DATADIR = "/home/hongze/Desktop/dataset"
 TRAIN_SAVE_NPY = "/home/hongze/Desktop/dataset/train.npy"
