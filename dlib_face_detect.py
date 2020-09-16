@@ -14,8 +14,18 @@ from PyQt5.QtCore import *
 
 
 class VideoInput():
+    box_left = 0
+    box_right = 0
+    box_up = 0
+    box_down = 0
     def start_capture(self, model, fileUrl):
         cap = cv2.VideoCapture(fileUrl)
+        w = 0
+        h = 0
+        past_x1 = 400
+        past_y1 = 400
+        past_x2 = 500
+        past_y2 = 500
         ret, frame = cap.read()
         width, height = frame.shape[:2]
         self.predicted_class = 0
@@ -36,21 +46,48 @@ class VideoInput():
                 y1 = face_rects[0].top()
                 x2 = face_rects[0].right()
                 y2 = face_rects[0].bottom()
-                
+
                 w=x2-x1
                 h=y2-y1
                 
-                (x1_body, y1_body, x2_body, y2_body) = (x1-int(1.2*w), y1-int(h/2), x2+int(3*w), height)
+                self.box_left = int((2*w + self.box_left)/2)
+                self.box_right = int((3.5*w + self.box_right)/2)
+                self.box_up = int((h/1.5 + self.box_up)/2)
+                self.box_down = int((height-y2 + self.box_down)/2)
                 
+                past_x1 = int( (x1 + past_x1)/2 )
+                past_y1 = int( (y1 + past_y1)/2 )
+                past_x2 = int( (x2 + past_x2)/2 )
+                past_y2 = int( (y2 + past_y2)/2 )
+                
+            elif(len(face_rects)<1):
+                x1 = past_x1
+                y1 = past_y1
+                x2 = past_x2
+                y2 = past_y2
+
+
+            if(w>50 and h>50):
+                (x1_body, y1_body, x2_body, y2_body) = (x1-self.box_left, y1-self.box_up, x2+self.box_right, y2+self.box_down)
+                if(x1_body<0):
+                    x1_body=0
+                if(y1_body<0):
+                    y1_body=0
+                if(x2_body>height):
+                    x2_body=height
+                if(y2_body>width):
+                    y2_body=width
+
                 out = frame[y1_body:y2_body,x1_body:x2_body]
                 out = cv2.resize(out, (256, 256) )
-                
+                cv2.imshow("detect image", out) 
                 output, model_out = self.predict_output(out , model)
                 self.predicted_class = np.argmax(model_out)
-                cv2.putText(mark_mat,output,(50,120), font, 4,(0,0,255),2,cv2.LINE_AA)
+                cv2.rectangle(mark_mat, (0, 0), (500, 100), (255, 255, 255), -1, cv2.LINE_AA)
+                cv2.putText(mark_mat,output,(20,70), font, 2,(0,0,255),2,cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 4, cv2.LINE_AA)
-            cv2.imwrite(filename, mark_mat)
+            #cv2.imwrite(filename, mark_mat)
             
             cv2.imshow("Face Detection", mark_mat)
             if cv2.waitKey(1) & 0xFF == ord('q'):

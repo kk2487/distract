@@ -50,8 +50,8 @@ class CNN():
         validation = train_data[26223:32776]#validation data
         """
         train_data = np.load(train_data, encoding="latin1")
-        train = train_data[:3000]#training data
-        validation = train_data[3000:3400]#validation data
+        train = train_data[:4000]#training data
+        validation = train_data[4000:4300]#validation data
         
        
         x_train = np.array([i[0] for i in train]).reshape(-1, utils.IMG_SIZE, utils.IMG_SIZE, 3)
@@ -64,7 +64,7 @@ class CNN():
 
         model = tflearn.DNN(convnet, tensorboard_dir=utils.TENSORBOARD_DIR, tensorboard_verbose=0)
 		
-        model.fit({'input': x_train}, {'targets': y_train}, n_epoch=10, validation_set=({'input': x_validation}, {'targets': y_validation}), snapshot_step=500, show_metric=True, run_id=utils.MODEL_NAME)
+        model.fit({'input': x_train}, {'targets': y_train}, n_epoch=5, validation_set=({'input': x_validation}, {'targets': y_validation}), snapshot_step=500, show_metric=True, run_id=utils.MODEL_NAME)
         model.save(utils.SAVE_PATH)
 
 		

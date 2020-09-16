@@ -49,9 +49,9 @@ class VideoInput():
                 w = self.init_x2 - self.init_x1
                 h = self.init_y2 - self.init_y1
                 
-                self.box_left = int((1.5*w + self.box_left)/2)
-                self.box_right = int((3.2*w + self.box_right)/2)
-                self.box_up = int((h/2 + self.box_up)/2)
+                self.box_left = int((2*w + self.box_left)/2)
+                self.box_right = int((3.5*w + self.box_right)/2)
+                self.box_up = int((h/1.5 + self.box_up)/2)
                 self.box_down = int((height-y2 + self.box_down)/2)
 
                 (x1_body, y1_body, x2_body, y2_body) = (self.init_x1-self.box_left, self.init_y1-self.box_up, self.init_x2+self.box_right, self.init_y2+self.box_down)
@@ -64,7 +64,7 @@ class VideoInput():
 
             if cv2.waitKey(1) & 0xFF == ord('q') :
                 break
-            if(num>30):
+            if(num>60):
                 break
         cap.release()
         cv2.destroyAllWindows()
