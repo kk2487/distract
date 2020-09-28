@@ -33,7 +33,7 @@ class VideoInput():
             num = num + 1
             ret, frame = cap.read()
             mark_mat = frame.copy()
-            face_rects = detector(frame, 0)
+            face_rects = detector(frame, 1)
             if(len(face_rects)>=1):
                 x1 = face_rects[0].left()
                 y1 = face_rects[0].top()
@@ -110,7 +110,12 @@ class VideoInput():
             
             if(w>50 and h>50):
                 (x1_body, y1_body, x2_body, y2_body) = (x1-self.box_left, y1-self.box_up, x2+self.box_right, y2+self.box_down)
-                
+                if(x1_body <0):
+                    x1_body = 0
+                #print(y1_body)
+                #print(y2_body)
+                #print(x1_body)
+                #print(x2_body)
                 out = frame[y1_body:y2_body,x1_body:x2_body]
                 out = cv2.resize(out, (img_size, img_size) )
                 

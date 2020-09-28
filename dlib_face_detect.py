@@ -14,10 +14,10 @@ from PyQt5.QtCore import *
 
 
 class VideoInput():
-    box_left = 0
-    box_right = 0
-    box_up = 0
-    box_down = 0
+    box_left = 150
+    box_right = 150
+    box_up = 50
+    box_down = 100
     def start_capture(self, model, fileUrl):
         cap = cv2.VideoCapture(fileUrl)
         w = 0
@@ -50,16 +50,21 @@ class VideoInput():
 
                 w=x2-x1
                 h=y2-y1
+                if( abs(x1-past_x1) < 150 or n<100): 
+                    self.box_left = int((2*w + self.box_left)/2)
+                    self.box_right = int((3.5*w + self.box_right)/2)
+                    self.box_up = int((h/1.5 + self.box_up)/2)
+                    self.box_down = int((height-y2 + self.box_down)/2)
                 
-                self.box_left = int((2*w + self.box_left)/2)
-                self.box_right = int((3.5*w + self.box_right)/2)
-                self.box_up = int((h/1.5 + self.box_up)/2)
-                self.box_down = int((height-y2 + self.box_down)/2)
-                
-                past_x1 = int( (x1 + past_x1)/2 )
-                past_y1 = int( (y1 + past_y1)/2 )
-                past_x2 = int( (x2 + past_x2)/2 )
-                past_y2 = int( (y2 + past_y2)/2 )
+                    past_x1 = int( (x1 + past_x1)/2 )
+                    past_y1 = int( (y1 + past_y1)/2 )
+                    past_x2 = int( (x2 + past_x2)/2 )
+                    past_y2 = int( (y2 + past_y2)/2 )
+                elif(n>150):
+                    x1 = past_x1
+                    y1 = past_y1
+                    x2 = past_x2
+                    y2 = past_y2
                 
             elif(len(face_rects)<1):
                 x1 = past_x1
@@ -84,10 +89,10 @@ class VideoInput():
                 cv2.imshow("detect image", out) 
                 output, model_out = self.predict_output(out , model)
                 self.predicted_class = np.argmax(model_out)
-                cv2.rectangle(mark_mat, (0, 0), (500, 100), (255, 255, 255), -1, cv2.LINE_AA)
-                cv2.putText(mark_mat,output,(20,70), font, 2,(0,0,255),2,cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 4, cv2.LINE_AA)
+                cv2.rectangle(mark_mat, (0, 0), (500, 100), (255, 255, 255), -1, cv2.LINE_AA)
+                cv2.putText(mark_mat,output,(20,70), font, 1.5,(0,0,255),3,cv2.LINE_AA)
             #cv2.imwrite(filename, mark_mat)
             
             cv2.imshow("Face Detection", mark_mat)

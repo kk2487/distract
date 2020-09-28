@@ -13,4 +13,4 @@ TRAIN_SAVE_NPY = "/home/hongze/Desktop/dataset/train.npy"
 TRAIN_DATA_PATH = "/home/hongze/Desktop/dataset/train.npy"
 
 
-IMAGE_CLASS = ['Drinking','Talking Left ','Talking Right','Adjust Radio/Music Player','Texting Left ','Texting Right','Safe']
+IMAGE_CLASS = ['Drinking','Talking Left ','Talking Right','Adjust Music Player','Texting Left ','Texting Right','Safe']
