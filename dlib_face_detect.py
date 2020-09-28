@@ -40,6 +40,7 @@ class VideoInput():
             ret, frame = cap.read()
             mark_mat = frame.copy()
             face_rects = detector(frame, 0)
+            #print(n)
             if(len(face_rects)>=1):
                 #print(face_rects[0])
                 #[(x1,y1),(x2,y2)] = face_rects[0]
@@ -50,7 +51,8 @@ class VideoInput():
 
                 w=x2-x1
                 h=y2-y1
-                if( abs(x1-past_x1) < 150 or n<100): 
+                #print(x1 - past_x1)
+                if( abs(x1-past_x1) < 150 or n<80): 
                     self.box_left = int((2*w + self.box_left)/2)
                     self.box_right = int((3.5*w + self.box_right)/2)
                     self.box_up = int((h/1.5 + self.box_up)/2)
@@ -60,7 +62,7 @@ class VideoInput():
                     past_y1 = int( (y1 + past_y1)/2 )
                     past_x2 = int( (x2 + past_x2)/2 )
                     past_y2 = int( (y2 + past_y2)/2 )
-                elif(n>150):
+                else:
                     x1 = past_x1
                     y1 = past_y1
                     x2 = past_x2
