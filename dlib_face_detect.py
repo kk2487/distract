@@ -13,29 +13,33 @@ import PyQt5.QtGui as QtGui
 from PyQt5.QtCore import *
 
 class VideoInput():
+    #臉部範圍與辨識位置的差量：往左'往右'往上'往下
     box_left = 150
     box_right = 150
     box_up = 50
-    box_down = 100
+    box_down = 200
     def start_capture(self, model, fileUrl, mode):
         cap = cv2.VideoCapture(fileUrl)
         w = 0
         h = 0
+        #紀錄上一個辨識範圍
         past_x1 = 400
         past_y1 = 400
         past_x2 = 500
         past_y2 = 500
         ret, frame = cap.read()
+        #順時鐘轉90度
+        frame = cv2.rotate(frame, cv2.cv2.ROTATE_90_CLOCKWISE) 
         height, width = frame.shape[:2]
         self.predicted_class = 0
         output = ""
         font = cv2.FONT_HERSHEY_SIMPLEX
+        #臉部偵測
         detector = dlib.get_frontal_face_detector()
+        #儲存結果圖片、影片
         if(mode == 2):    
             fps = int(cap.get(cv2.CAP_PROP_FPS))
             print(fps)
-            print(width)
-            print(height)
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             video_writer = cv2.VideoWriter('./result.avi', fourcc, fps, (width, height))
         
@@ -45,56 +49,65 @@ class VideoInput():
             output = ""
             n=n+1
             ret, frame = cap.read()
+            #順時鐘旋轉90度
             frame = cv2.rotate(frame, cv2.cv2.ROTATE_90_CLOCKWISE) 
+            #創一個用來畫辨識集果的圖片
             mark_mat = frame.copy()
+            #臉部偵測
             face_rects = detector(frame, 0)
-            #print(n)
+            
+            #一個以上的臉部偵測,取第一個當作對象
             if(len(face_rects)>=1):
                 #print(face_rects[0])
-                #[(x1,y1),(x2,y2)] = face_rects[0]
                 x1 = face_rects[0].left()
                 y1 = face_rects[0].top()
                 x2 = face_rects[0].right()
                 y2 = face_rects[0].bottom()
-
+                #計算臉部寬高
                 w=x2-x1
                 h=y2-y1
-                #print(x1 - past_x1)
-                if( abs(x1-past_x1) < 150 or n<80): 
-                    self.box_left = int((2*w + self.box_left)/2)
-                    self.box_right = int((3.5*w + self.box_right)/2)
-                    self.box_up = int((h/1.5 + self.box_up)/2)
+
+                #當與上一個frame的臉部位置差距合理內,或程式剛執行,計算臉部位置與辨識位置差量,並更新past point
+                if( abs(x1-past_x1) < 150 or n<80):
+                    #當前與原本取平均
+                    self.box_left = int((0.5*w + self.box_left)/2)
+                    self.box_right = int((0.5*w + self.box_right)/2)
+                    self.box_up = int((h/2.5 + self.box_up)/2)
                     self.box_down = int((height-y2 + self.box_down)/2)
-                
+
                     past_x1 = int( (x1 + past_x1)/2 )
                     past_y1 = int( (y1 + past_y1)/2 )
                     past_x2 = int( (x2 + past_x2)/2 )
                     past_y2 = int( (y2 + past_y2)/2 )
                 else:
+                    #若與上一個frame距離差過多,採用上一個frame紀錄的點
                     x1 = past_x1
                     y1 = past_y1
                     x2 = past_x2
                     y2 = past_y2
-                
+
+            #如果沒有偵測到臉部,採用上一個frame紀錄的點
             elif(len(face_rects)<1):
                 x1 = past_x1
                 y1 = past_y1
                 x2 = past_x2
                 y2 = past_y2
 
-
+            #當寬高大於一定大小,開始計算預辨識範圍
             if(w>50 and h>50):
                 (x1_body, y1_body, x2_body, y2_body) = (x1-self.box_left, y1-self.box_up, x2+self.box_right, y2+self.box_down)
+                #超過邊界,例外處理
                 if(x1_body<0):
                     x1_body=0
                 if(y1_body<0):
                     y1_body=0
-                if(x2_body>height):
-                    x2_body=height
-                if(y2_body>width):
-                    y2_body=width
-
+                if(x2_body>width):
+                    x2_body=width
+                if(y2_body>height):
+                    y2_body=height
+                #裁切預辨識範圍
                 out = frame[y1_body:y2_body,x1_body:x2_body]
+                #縮放成cnn輸入圖片大小
                 out = cv2.resize(out, (256, 256) )
                 
                 cv2.imshow("detect image", out) 
@@ -106,9 +119,10 @@ class VideoInput():
                 cv2.rectangle(mark_mat, (0, 0), (500, 100), (255, 255, 255), -1, cv2.LINE_AA)
                 cv2.putText(mark_mat,output,(20,70), font, 1.5,(0,0,255),3,cv2.LINE_AA)
 
+                #儲存訓練圖片
                 if(mode == 1):
                     cv2.imwrite(filename, out)
-
+            #儲存結果圖與結果影片
             if(mode == 2):
                 cv2.imwrite(filename, mark_mat)
                 video_writer.write(mark_mat)
