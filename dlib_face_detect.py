@@ -45,6 +45,7 @@ class VideoInput():
             output = ""
             n=n+1
             ret, frame = cap.read()
+            frame = cv2.rotate(frame, cv2.cv2.ROTATE_90_CLOCKWISE) 
             mark_mat = frame.copy()
             face_rects = detector(frame, 0)
             #print(n)

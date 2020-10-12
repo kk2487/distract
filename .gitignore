@@ -1,5 +1,6 @@
 *.npy
 *.swp
+*.mp4
 models/
 npy_arrays/
 __pycache__/
