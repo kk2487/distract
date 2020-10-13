@@ -45,7 +45,7 @@ class VideoInput():
         
         n=0
         while(cap.isOpened()):
-            filename = "image_" + str(n) + ".jpg"
+            filename = "image1_" + str(n) + ".jpg"
             output = ""
             n=n+1
             ret, frame = cap.read()
@@ -70,9 +70,9 @@ class VideoInput():
                 #當與上一個frame的臉部位置差距合理內,或程式剛執行,計算臉部位置與辨識位置差量,並更新past point
                 if( abs(x1-past_x1) < 150 or n<80):
                     #當前與原本取平均
-                    self.box_left = int((0.5*w + self.box_left)/2)
-                    self.box_right = int((0.5*w + self.box_right)/2)
-                    self.box_up = int((h/2.5 + self.box_up)/2)
+                    self.box_left = int((x1-0 + self.box_left)/2)
+                    self.box_right = int((width-x2 + self.box_right)/2)
+                    self.box_up = int((h + self.box_up)/2)
                     self.box_down = int((height-y2 + self.box_down)/2)
 
                     past_x1 = int( (x1 + past_x1)/2 )

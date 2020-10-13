@@ -2,5 +2,8 @@
 *.swp
 *.mp4
 models/
+depth/
+ir/
+rgb/
 npy_arrays/
 __pycache__/

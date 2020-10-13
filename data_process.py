@@ -6,14 +6,14 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import utils
 
-length = 7
+length = 6
 
 class DataProcess():
 
     train_npy = []
     
     def create_label(self, index):
-        labels = [0] * 7
+        labels = [0] * 6
         labels[index]  = 1
         return np.array(labels)
 
