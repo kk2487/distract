@@ -1,6 +1,7 @@
 *.npy
 *.swp
 *.mp4
+*.dat
 models/
 depth/
 ir/
