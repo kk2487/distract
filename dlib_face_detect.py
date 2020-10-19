@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 import PyQt5.QtGui as QtGui
 from PyQt5.QtCore import *
+from gaze_tracking import GazeTracking
 
 class VideoInput():
     #臉部範圍與辨識位置的差量：往左'往右'往上'往下
@@ -36,6 +37,8 @@ class VideoInput():
         font = cv2.FONT_HERSHEY_SIMPLEX
         #臉部偵測
         detector = dlib.get_frontal_face_detector()
+        predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+        gaze = GazeTracking()
         #儲存結果圖片、影片
         if(mode == 2):    
             fps = int(cap.get(cv2.CAP_PROP_FPS))
@@ -56,9 +59,67 @@ class VideoInput():
             #臉部偵測
             face_rects = detector(frame, 0)
             
+            
+            gaze.refresh(frame)
+            print(gaze.horizontal_ratio())
+            print(gaze.vertical_ratio())
+            print("------------------")
+            text = ""
+            cv2.rectangle(mark_mat, (0, 150), (300, 250), (255, 255, 255), -1, cv2.LINE_AA)
+            if ( gaze.horizontal_ratio() != None): 
+                if (float(gaze.horizontal_ratio())<0.6) :
+                    text = "Looking right"
+                elif (float(gaze.horizontal_ratio())>=0.8):
+                    text = "Looking left"
+                else :
+                    text = "Looking center"
+            cv2.putText(mark_mat, text, (20, 180), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+            text = ""
+            if ( gaze.vertical_ratio() != None): 
+                if (float(gaze.vertical_ratio())>0.9) :
+                    text = "Looking down"
+                elif(float(gaze.vertical_ratio())<0.1) :
+                    text = "Looking up"
+                else:
+                    text = "Looking center"
+                
+            cv2.putText(mark_mat, text, (20, 230), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+            
             #一個以上的臉部偵測,取第一個當作對象
             if(len(face_rects)>=1):
-                #print(face_rects[0])
+                landmarks = np.matrix([[p.x, p.y] for p in predictor(frame,face_rects[0]).parts()])
+                x1 = landmarks[27,0]
+                y1 = landmarks[27,1]
+                x2 = landmarks[30,0]
+                y2 = landmarks[30,1]
+                m = ((height - y2) -(height-y1)) / (x2 - x1 + 0.000000001)
+                m_h = -1 / m
+                #print(m_vertical)
+                xx1 = 200
+                xx2 = 600
+                yy1 = int(height - m_h * xx1 -(height - y2))
+                yy2 = int(height - m_h * xx2 -(height - y2))
+                
+                m_eye = ((height-landmarks[39,1])-(height-landmarks[42,1]))/(landmarks[39,0]-landmarks[42,0])
+
+                print(m_eye, m_h)
+                
+                xe1 = 200
+                xe2 = 600
+                ye1 = int(height - m_eye * xx1 -(height - landmarks[39,1]))
+                ye2 = int(height - m_eye * xx2 -(height - landmarks[39,1]))
+                
+                cv2.line(mark_mat, (landmarks[27,0],landmarks[27,1]), (landmarks[30,0],landmarks[30,1]), (0,0,255), 2)
+                cv2.line(mark_mat, (xx1,yy1),(xx2,yy2), (255,0,0), 2) 
+                cv2.line(mark_mat, (xe1,ye1),(xe2,ye2), (0,255,0), 5) 
+                for idx, point in enumerate(landmarks):        
+                    #enumerate函式遍歷序列中的元素及它們的下標
+                    #68點的座標
+                    pos = (point[0, 0], point[0, 1])
+                    #print(idx,pos)
+                    cv2.circle(mark_mat, pos, 2, color=(150, 0, 0))
+
+               #print(face_rects[0])
                 x1 = face_rects[0].left()
                 y1 = face_rects[0].top()
                 x2 = face_rects[0].right()
