@@ -44,10 +44,11 @@ class VideoInput():
             fps = int(cap.get(cv2.CAP_PROP_FPS))
             print(fps)
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            video_writer = cv2.VideoWriter('./result.avi', fourcc, fps, (width, height))
+            video_writer = cv2.VideoWriter('./result.avi', fourcc, 8, (width, height))
         
         n=0
         while(cap.isOpened()):
+            start = time.time()
             filename = "image1_" + str(n) + ".jpg"
             output = ""
             n=n+1
@@ -58,60 +59,74 @@ class VideoInput():
             mark_mat = frame.copy()
             #臉部偵測
             face_rects = detector(frame, 0)
+            cv2.rectangle(mark_mat, (0, 0), (width, 100), (255, 255, 255), -1, cv2.LINE_AA)
             
-            
+            #偵測瞳孔位置 
             gaze.refresh(frame)
-            print(gaze.horizontal_ratio())
-            print(gaze.vertical_ratio())
-            print("------------------")
+            #print(gaze.horizontal_ratio())
+            #print(gaze.vertical_ratio())
+            #print("------------------")
+            #水平
             text = ""
-            cv2.rectangle(mark_mat, (0, 150), (300, 250), (255, 255, 255), -1, cv2.LINE_AA)
             if ( gaze.horizontal_ratio() != None): 
                 if (float(gaze.horizontal_ratio())<0.6) :
-                    text = "Looking right"
+                    text = "right"
                 elif (float(gaze.horizontal_ratio())>=0.8):
-                    text = "Looking left"
+                    text = "left"
                 else :
-                    text = "Looking center"
-            cv2.putText(mark_mat, text, (20, 180), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+                    text = "center"
+            cv2.putText(mark_mat, text, (350, 30), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+            #垂直
             text = ""
             if ( gaze.vertical_ratio() != None): 
                 if (float(gaze.vertical_ratio())>0.9) :
-                    text = "Looking down"
+                    text = "down"
                 elif(float(gaze.vertical_ratio())<0.1) :
-                    text = "Looking up"
+                    text = "up"
                 else:
-                    text = "Looking center"
+                    text = "center"
                 
-            cv2.putText(mark_mat, text, (20, 230), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+            cv2.putText(mark_mat, text, (350, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
             
             #一個以上的臉部偵測,取第一個當作對象
             if(len(face_rects)>=1):
+                #偵測頭部歪斜,轉頭
                 landmarks = np.matrix([[p.x, p.y] for p in predictor(frame,face_rects[0]).parts()])
-                x1 = landmarks[27,0]
-                y1 = landmarks[27,1]
-                x2 = landmarks[30,0]
-                y2 = landmarks[30,1]
-                m = ((height - y2) -(height-y1)) / (x2 - x1 + 0.000000001)
-                m_h = -1 / m
-                #print(m_vertical)
-                xx1 = 200
-                xx2 = 600
-                yy1 = int(height - m_h * xx1 -(height - y2))
-                yy2 = int(height - m_h * xx2 -(height - y2))
                 
-                m_eye = ((height-landmarks[39,1])-(height-landmarks[42,1]))/(landmarks[39,0]-landmarks[42,0])
-
-                print(m_eye, m_h)
+                eye_l_x = int((landmarks[42,0] + landmarks[45,0])/2)
+                eye_l_y = int((landmarks[42,1] + landmarks[45,1])/2)
+                eye_r_x = int((landmarks[36,0] + landmarks[39,0])/2)
+                eye_r_y = int((landmarks[36,1] + landmarks[39,1])/2)
                 
-                xe1 = 200
-                xe2 = 600
-                ye1 = int(height - m_eye * xx1 -(height - landmarks[39,1]))
-                ye2 = int(height - m_eye * xx2 -(height - landmarks[39,1]))
+                m_eye = ((height-eye_l_y)-(height-eye_r_y))/(eye_l_x-eye_r_x)
+                dis_eye = pow(eye_l_x-eye_r_x,2) + pow(eye_l_y-eye_r_y,2)
                 
-                cv2.line(mark_mat, (landmarks[27,0],landmarks[27,1]), (landmarks[30,0],landmarks[30,1]), (0,0,255), 2)
-                cv2.line(mark_mat, (xx1,yy1),(xx2,yy2), (255,0,0), 2) 
-                cv2.line(mark_mat, (xe1,ye1),(xe2,ye2), (0,255,0), 5) 
+                dis = pow(landmarks[0,0]-landmarks[36,0],2)+pow(landmarks[0,1]-landmarks[36,1],2)
+                print("%.3f" %m_eye)
+                print(dis_eye)
+                print(dis)
+                print("-----------------------")
+                text = ""
+                if(m_eye>0.1):
+                    text = "tilt right"
+                elif(m_eye<-0.2):
+                    text = "tilt left"
+                else:
+                    text = "normal"
+                cv2.putText(mark_mat, text, (550, 30), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+                #print(m_h+m_eye)
+                text = ""
+                if(dis<3000):
+                    text = "turn right"
+                elif(dis>10000):
+                    text = "turn left"
+                else:
+                    text = "normal"
+                cv2.putText(mark_mat, text, (550, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
+                #cv2.line(mark_mat, (landmarks[27,0],landmarks[27,1]), (landmarks[30,0],landmarks[30,1]), (0,0,255), 2)
+                cv2.line(mark_mat, (0,landmarks[27,1]),(width,landmarks[27,1]), (0,0,0), 2) 
+                #cv2.line(mark_mat, (xx1,yy1),(xx2,yy2), (255,0,0), 2) 
+                cv2.line(mark_mat, (eye_l_x,eye_l_y),(eye_r_x,eye_r_y), (0,255,0), 5) 
                 for idx, point in enumerate(landmarks):        
                     #enumerate函式遍歷序列中的元素及它們的下標
                     #68點的座標
@@ -176,9 +191,8 @@ class VideoInput():
                 output, model_out = self.predict_output(out , model)
                 self.predicted_class = np.argmax(model_out)
                 cv2.rectangle(mark_mat, (x1, y1), (x2, y2), (0, 255, 0), 4, cv2.LINE_AA)
-                cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 4, cv2.LINE_AA)
-                cv2.rectangle(mark_mat, (0, 0), (500, 100), (255, 255, 255), -1, cv2.LINE_AA)
-                cv2.putText(mark_mat,output,(20,70), font, 1.5,(0,0,255),3,cv2.LINE_AA)
+                cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 2, cv2.LINE_AA)
+                cv2.putText(mark_mat,output,(20,50), font, 1.5,(0,0,255),3,cv2.LINE_AA)
 
                 #儲存訓練圖片
                 if(mode == 1):
@@ -187,7 +201,10 @@ class VideoInput():
             if(mode == 2):
                 cv2.imwrite(filename, mark_mat)
                 video_writer.write(mark_mat)
-            
+            end = time.time()
+            seconds = end - start
+
+            print("FPS : ", int(1/seconds))
             cv2.imshow("Face Detection", mark_mat)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

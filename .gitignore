@@ -2,6 +2,8 @@
 *.swp
 *.mp4
 *.dat
+*.avi
+*.jpg
 models/
 depth/
 ir/

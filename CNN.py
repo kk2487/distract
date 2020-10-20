@@ -31,10 +31,10 @@ class CNN():
 
         #fully connected layer with relu activation
         convnet = fully_connected(convnet, 1024, activation='relu')
-        convnet = dropout(convnet, 0.6)
+        convnet = dropout(convnet, 0.8)
 
         convnet = fully_connected(convnet, 512, activation='relu')
-        convnet = dropout(convnet, 0.6)
+        convnet = dropout(convnet, 0.8)
 
         #fully connected with softmax activation ( OUTPUT LAYER )
         convnet = fully_connected(convnet, 6, activation='softmax')#change 7classes
@@ -50,8 +50,8 @@ class CNN():
         validation = train_data[26223:32776]#validation data
         """
         train_data = np.load(train_data, encoding="latin1")
-        train = train_data[:8000]#training data
-        validation = train_data[8000:8990]#validation data
+        train = train_data[:14000]#training data
+        validation = train_data[14000:15770]#validation data
         
        
         x_train = np.array([i[0] for i in train]).reshape(-1, utils.IMG_SIZE, utils.IMG_SIZE, 3)
