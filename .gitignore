@@ -4,6 +4,7 @@
 *.dat
 *.avi
 *.jpg
+*.xlsx
 models/
 depth/
 ir/

@@ -6,6 +6,8 @@ import CNN as cnn
 import time
 import utils
 import dlib
+import openpyxl
+
 from threading import Thread
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -20,6 +22,9 @@ class VideoInput():
     box_up = 50
     box_down = 200
     def start_capture(self, model, fileUrl, mode):
+        wb =openpyxl.Workbook()
+        sheet = wb['Sheet']
+
         cap = cv2.VideoCapture(fileUrl)
         w = 0
         h = 0
@@ -44,23 +49,29 @@ class VideoInput():
             fps = int(cap.get(cv2.CAP_PROP_FPS))
             print(fps)
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            video_writer = cv2.VideoWriter('./result.avi', fourcc, 8, (width, height))
+            video_writer = cv2.VideoWriter('./result.avi', fourcc, fps, (width, height))
         
-        n=0
+        n=1
         while(cap.isOpened()):
-            start = time.time()
+            
             filename = "image1_" + str(n) + ".jpg"
+            index = 'A'+str(n)
             output = ""
             n=n+1
+            #print(index)
             ret, frame = cap.read()
             #順時鐘旋轉90度
             frame = cv2.rotate(frame, cv2.cv2.ROTATE_90_CLOCKWISE) 
             #創一個用來畫辨識集果的圖片
+            start = time.time()
             mark_mat = frame.copy()
             #臉部偵測
             face_rects = detector(frame, 0)
             cv2.rectangle(mark_mat, (0, 0), (width, 100), (255, 255, 255), -1, cv2.LINE_AA)
+            mid = time.time()
+            print(mid-start)
             
+            """
             #偵測瞳孔位置 
             gaze.refresh(frame)
             #print(gaze.horizontal_ratio())
@@ -87,9 +98,10 @@ class VideoInput():
                     text = "center"
                 
             cv2.putText(mark_mat, text, (350, 60), cv2.FONT_HERSHEY_DUPLEX, 1, (255, 0, 0), 2)
-            
-            #一個以上的臉部偵測,取第一個當作對象
+            """
+           #一個以上的臉部偵測,取第一個當作對象
             if(len(face_rects)>=1):
+                """
                 #偵測頭部歪斜,轉頭
                 landmarks = np.matrix([[p.x, p.y] for p in predictor(frame,face_rects[0]).parts()])
                 
@@ -134,6 +146,7 @@ class VideoInput():
                     #print(idx,pos)
                     cv2.circle(mark_mat, pos, 2, color=(150, 0, 0))
 
+                """
                #print(face_rects[0])
                 x1 = face_rects[0].left()
                 y1 = face_rects[0].top()
@@ -186,7 +199,7 @@ class VideoInput():
                 #縮放成cnn輸入圖片大小
                 out = cv2.resize(out, (256, 256) )
                 
-                cv2.imshow("detect image", out) 
+                #cv2.imshow("detect image", out) 
                 
                 output, model_out = self.predict_output(out , model)
                 self.predicted_class = np.argmax(model_out)
@@ -194,15 +207,17 @@ class VideoInput():
                 cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 2, cv2.LINE_AA)
                 cv2.putText(mark_mat,output,(20,50), font, 1.5,(0,0,255),3,cv2.LINE_AA)
 
+                #sheet[index] = output
+                #wb.save('result.xlsx')
                 #儲存訓練圖片
-                if(mode == 1):
-                    cv2.imwrite(filename, out)
+                #if(mode == 1):
+                #    cv2.imwrite(filename, out)
             #儲存結果圖與結果影片
-            if(mode == 2):
-                cv2.imwrite(filename, mark_mat)
-                video_writer.write(mark_mat)
+            #if(mode == 2):
+            #    cv2.imwrite(filename, mark_mat)
+            #    video_writer.write(mark_mat)
             end = time.time()
-            seconds = end - start
+            seconds = end - mid
 
             print("FPS : ", int(1/seconds))
             cv2.imshow("Face Detection", mark_mat)
@@ -212,7 +227,6 @@ class VideoInput():
             video_writer.release()
         cap.release()
         cv2.destroyAllWindows()
-
 
     def predict_output(self , image , model):
         image = cv2.resize(image, (utils.IMG_SIZE, utils.IMG_SIZE))
