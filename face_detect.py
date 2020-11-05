@@ -29,7 +29,10 @@ class Camera():
             ret, frame = cap.read()
             src = cv2.cvtColor(frame, cv2.IMREAD_COLOR)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            start = time.time()
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+            end = time.time()
+            print(end-start)
             if(len(faces)>=1):
                 (x,y,w,h) = faces[0]
                 center = (x + w//2, y + h//2)
@@ -74,10 +77,12 @@ class VideoInput():
         while(cap.isOpened()):
             start = time.time()
             ret, frame = cap.read()
+            start = time.time()
             src = cv2.cvtColor(frame, cv2.IMREAD_COLOR)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-            
+            end = time.time()
+            print(end - start)
             if(len(faces)>=1):
                 (x,y,w,h) = faces[0]
                 center = (x + w//2, y + h//2)

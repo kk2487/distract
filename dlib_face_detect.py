@@ -41,7 +41,10 @@ class VideoInput():
         output = ""
         font = cv2.FONT_HERSHEY_SIMPLEX
         #臉部偵測
+        start =time.time()
         detector = dlib.get_frontal_face_detector()
+        end =time.time()
+        print(end - start)
         predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
         gaze = GazeTracking()
         #儲存結果圖片、影片

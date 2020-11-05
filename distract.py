@@ -31,10 +31,7 @@ class VideoInput():
     box_up = 50
     box_down = 200
     def start_capture(self, model, fileUrl, mode):
-        
-        wb =openpyxl.Workbook()
-        sheet = wb['Sheet']
-
+        setup_start = time.time()
         cap = cv2.VideoCapture(fileUrl)
         w = 0
         h = 0
@@ -63,13 +60,17 @@ class VideoInput():
         #儲存結果圖片、影片
         if(mode == 2):    
             fps = int(cap.get(cv2.CAP_PROP_FPS))
+            wb =openpyxl.Workbook()
+            sheet = wb['Sheet']
             print(fps)
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             video_writer = cv2.VideoWriter('./result.avi', fourcc, fps, (width, height))
         
         n=1
+        setup_end = time.time()
+        print(setup_end - setup_start)
         while(cap.isOpened()):
-            
+            print('----------------------------------')
             filename = "image1_" + str(n) + ".jpg"
             index = 'A'+str(n)
             output = ""
@@ -77,35 +78,62 @@ class VideoInput():
             #print(index)
             ret, frame = cap.read()
             #順時鐘旋轉90度
+            face_detect_start = time.time()
             frame = cv2.rotate(frame, cv2.cv2.ROTATE_90_CLOCKWISE) 
             facebox = mark_detector.extract_cnn_facebox(frame)
-            #創一個用來畫辨識集果的圖片
-            start = time.time()
+            #創一個用來畫辨識結果的圖片
             mark_mat = frame.copy()
             #臉部偵測
             #face_rects = detector(frame, 0)
-            cv2.rectangle(mark_mat, (0, 0), (width, 100), (255, 255, 255), -1, cv2.LINE_AA)
-            mid = time.time()
-            print(mid-start)
-           #一個以上的臉部偵測,取第一個當作對象
+            face_detect_end = time.time()
+            print('face_detect_time     : ', face_detect_end-face_detect_start)
+            #一個以上的臉部偵測,取第一個當作對象
+            
             if(facebox is not None):
                 face_img = frame[facebox[1]: facebox[3], facebox[0]: facebox[2]]
-                cv2.imshow("face", face_img) 
+                #cv2.imshow("face", face_img) 
+                headpose_detect_start = time.time()
                 face_img = cv2.resize(face_img, (CNN_INPUT_SIZE, CNN_INPUT_SIZE))
                 face_img = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
                 marks = mark_detector.detect_marks([face_img]) 
-                marks *= (facebox[2] - facebox[0])
+                marks *= (facebox[3] - facebox[1])
                 marks[:, 0] += facebox[0]
                 marks[:, 1] += facebox[1]
                 pose = pose_estimator.solve_pose_by_68_points(marks)
                 steady_pose = []
                 pose_np = np.array(pose).flatten()
+                #right eye marks[36]~marks[41]   left eye marks[42]~marks[47]
+                #cv2.circle(mark_mat, tuple(marks[36]), 3, (255,255,0), 8)
+                #cv2.circle(mark_mat, tuple(marks[42]), 3, (255,0,255), 8)
+             
                 for value, ps_stb in zip(pose_np, pose_stabilizers):
                     ps_stb.update([value])
                     steady_pose.append(ps_stb.state[0])
                 steady_pose = np.reshape(steady_pose, (-1, 3))
                 point2D = pose_estimator.draw_annotation_box(mark_mat, steady_pose[0], steady_pose[1], color=(128, 255, 128))
-               #print(face_rects[0])
+                up_down = ""
+                left_right = ""
+                top_f_y = int(((point2D[5][1])+(point2D[8][1]))/2)
+                top_b_y = int(((point2D[0][1])+(point2D[3][1]))/2)
+                left_f_y = int(((point2D[5][0])+(point2D[6][0]))/2)
+                left_b_y = int(((point2D[0][0])+(point2D[1][0]))/2)
+                if(top_f_y - top_b_y > -20):
+                	up_down = ": down"
+                elif(top_f_y - top_b_y < -100):
+                	up_down = ": up"
+                else:
+                	up_down = ": normal"
+
+                if(left_f_y - left_b_y > 25):
+                	left_right = ": left"
+                elif(left_f_y - left_b_y < -80):
+                	left_right = ": right"
+                else:
+                	left_right = ": normal"
+
+                print('front : ',top_f_y,', back : ',top_b_y)
+                headpose_detect_end = time.time()
+                print('headpose_detect_time : ', headpose_detect_end - headpose_detect_start)
                 x1 = facebox[0]
                 y1 = facebox[1]
                 x2 = facebox[2]
@@ -139,7 +167,8 @@ class VideoInput():
                 y1 = past_y1
                 x2 = past_x2
                 y2 = past_y2
-
+                up_down = ""
+                left_right = ""
             #當寬高大於一定大小,開始計算預辨識範圍
             if(w>50 and h>50):
                 (x1_body, y1_body, x2_body, y2_body) = (x1-self.box_left, y1-self.box_up, x2+self.box_right, y2+self.box_down)
@@ -152,6 +181,7 @@ class VideoInput():
                     x2_body=width
                 if(y2_body>height):
                     y2_body=height
+                distract_detect_start = time.time()
                 #裁切預辨識範圍
                 out = frame[y1_body:y2_body,x1_body:x2_body]
                 #縮放成cnn輸入圖片大小
@@ -160,24 +190,38 @@ class VideoInput():
                 #cv2.imshow("detect image", out) 
                 
                 output, model_out = self.predict_output(out , model)
+                """
                 self.predicted_class = np.argmax(model_out)
+                for i in range(68):
+                    cv2.circle(frame, tuple(marks[i]), 1, (0,255,255), 4)
+                cv2.imwrite(filename, frame)
+                """
                 cv2.rectangle(mark_mat, (x1, y1), (x2, y2), (255, 255, 255), 4, cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 2, cv2.LINE_AA)
-                cv2.putText(mark_mat,output,(20,50), font, 1.5,(0,0,255),3,cv2.LINE_AA)
-
-                #sheet[index] = output
-                #wb.save('result.xlsx')
+                cv2.rectangle(mark_mat, (0, 0), (width, 100), (255, 255, 255), -1, cv2.LINE_AA)
+                cv2.putText(mark_mat,output,(15,50), font, 1.4,(0,0,255),3,cv2.LINE_AA)
+                distract_detect_end = time.time()
+                print('distract_detect_time : ',distract_detect_end - distract_detect_start)
+                fps = 'FPS : '+str(int(1/(distract_detect_end - face_detect_start)))
+                print(fps)
+                cv2.putText(mark_mat,fps,(20,95), font, 1,(0,0,0),2,cv2.LINE_AA)
+                cv2.putText(mark_mat,"Head Pose",(350,30), font, 1,(100,0,200),2,cv2.LINE_AA)
+                cv2.putText(mark_mat,"Up-Down",(350,60), font, 1,(0,0,0),2,cv2.LINE_AA)
+                cv2.putText(mark_mat,up_down,(550,60), font, 1,(0,0,0),2,cv2.LINE_AA)
+                cv2.putText(mark_mat,"Left-Right",(350,90), font, 1,(0,0,0),2,cv2.LINE_AA)
+                cv2.putText(mark_mat,left_right,(550,90), font, 1,(0,0,0),2,cv2.LINE_AA)
+                #mark_mat = cv2.resize(mark_mat, (360,640))
+                if(mode == 2):
+                    sheet[index] = output
                 #儲存訓練圖片
-                #if(mode == 1):
-                #    cv2.imwrite(filename, out)
+                if(mode == 1):
+                    cv2.imwrite(filename, out)
             #儲存結果圖與結果影片
-            #if(mode == 2):
-            #    cv2.imwrite(filename, mark_mat)
-            #    video_writer.write(mark_mat)
-            end = time.time()
-            seconds = end - mid
+            if(mode == 2):
+                cv2.imwrite(filename, mark_mat)
+                video_writer.write(mark_mat)
+                wb.save('result.xlsx')
 
-            print("FPS : ", int(1/seconds))
             cv2.imshow("Face Detection", mark_mat)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
