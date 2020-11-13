@@ -52,7 +52,10 @@ class VideoInput():
         
         self.predicted_class = 0
         output = ""
+        result = ""
         font = cv2.FONT_HERSHEY_SIMPLEX
+        output_check = np.zeros(len(utils.IMAGE_CLASS))
+        count = 0
         #臉部偵測
         #detector = dlib.get_frontal_face_detector()
         #predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
@@ -73,7 +76,6 @@ class VideoInput():
             print('----------------------------------')
             filename = "image1_" + str(n) + ".jpg"
             index = 'A'+str(n)
-            output = ""
             n=n+1
             #print(index)
             ret, frame = cap.read()
@@ -131,7 +133,7 @@ class VideoInput():
                 else:
                 	left_right = ": normal"
 
-                print('front : ',top_f_y,', back : ',top_b_y)
+                #print('front : ',top_f_y,', back : ',top_b_y)
                 headpose_detect_end = time.time()
                 print('headpose_detect_time : ', headpose_detect_end - headpose_detect_start)
                 x1 = facebox[0]
@@ -190,18 +192,25 @@ class VideoInput():
                 #cv2.imshow("detect image", out) 
                 
                 output, model_out = self.predict_output(out , model)
-                """
-                self.predicted_class = np.argmax(model_out)
-                for i in range(68):
-                    cv2.circle(frame, tuple(marks[i]), 1, (0,255,255), 4)
-                cv2.imwrite(filename, frame)
-                """
+                
+                if(count < 15):
+                	output_check[np.argmax(model_out)] = output_check[np.argmax(model_out)] + 1
+                	count = count + 1
+                	
+                else:
+                	count = 0
+                	print(output_check)
+                	result = str(utils.IMAGE_CLASS[np.argmax(output_check)])
+                	print(result)
+                	output_check = np.zeros(len(utils.IMAGE_CLASS))
+ 
                 cv2.rectangle(mark_mat, (x1, y1), (x2, y2), (255, 255, 255), 4, cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (x1_body,y1_body),(x2_body,y2_body), (255, 0, 0), 2, cv2.LINE_AA)
                 cv2.rectangle(mark_mat, (0, 0), (width, 100), (255, 255, 255), -1, cv2.LINE_AA)
-                cv2.putText(mark_mat,output,(15,50), font, 1.4,(0,0,255),3,cv2.LINE_AA)
+                
                 distract_detect_end = time.time()
                 print('distract_detect_time : ',distract_detect_end - distract_detect_start)
+                cv2.putText(mark_mat,result,(15,50), font, 1.4,(0,0,255),3,cv2.LINE_AA)
                 fps = 'FPS : '+str(int(1/(distract_detect_end - face_detect_start)))
                 print(fps)
                 cv2.putText(mark_mat,fps,(20,95), font, 1,(0,0,0),2,cv2.LINE_AA)
